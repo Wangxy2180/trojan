@@ -27,6 +27,7 @@ using namespace std;
 using namespace boost::property_tree;
 
 void Config::load(const string &filename) {
+    Log::log("Config::load()",Log::FATAL);
     ptree tree;
     read_json(filename, tree);
     populate(tree);
@@ -42,22 +43,26 @@ void Config::populate(const std::string &JSON) {
 void Config::populate(const ptree &tree) {
     string rt = tree.get("run_type", string("client"));
     if (rt == "server") {
+        Log::log("Config::popilate server",Log::FATAL);
         run_type = SERVER;
     } else if (rt == "forward") {
         run_type = FORWARD;
     } else {
         run_type = CLIENT;
     }
+    // 疯狂获取参数ing，两个参数分别是get(path, default_val)
     local_addr = tree.get("local_addr", string());
     local_port = tree.get("local_port", uint16_t());
     remote_addr = tree.get("remote_addr", string());
     remote_port = tree.get("remote_port", uint16_t());
     target_addr = tree.get("target_addr", string());
     target_port = tree.get("target_port", uint16_t());
+    // Log::log(local_addr+", "+remote_addr,Log::FATAL);
     map<string, string>().swap(password);
     for (auto& item: tree.get_child("password")) {
         string p = item.second.get_value<string>();
         password[SHA224(p)] = p;
+        // Log::log(p + ",,,",Log::FATAL);
     }
     append_payload = tree.get("append_payload", true);
     udp_timeout = tree.get("udp_timeout", 60);
@@ -93,11 +98,13 @@ void Config::populate(const ptree &tree) {
     mysql.database = tree.get("mysql.database", string("trojan"));
     mysql.username = tree.get("mysql.username", string("trojan"));
     mysql.password = tree.get("mysql.password", string());
+    // Log::log("here",Log::FATAL);
 }
 
 bool Config::sip003() {
     char *JSON = getenv("SS_PLUGIN_OPTIONS");
     if (JSON == NULL) {
+        Log::log("sip003 JSON fail",Log::FATAL);
         return false;
     }
     populate(JSON);

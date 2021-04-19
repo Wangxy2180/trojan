@@ -47,7 +47,9 @@ Service::Service(Config &config, bool test) :
         tcp::endpoint listen_endpoint = *resolver.resolve(tcp::resolver::query(config.local_addr, to_string(config.local_port)));
         socket_acceptor.open(listen_endpoint.protocol());
         socket_acceptor.set_option(tcp::acceptor::reuse_address(true));
+        // 就是这句话，他需要sudo权限
         socket_acceptor.bind(listen_endpoint);
+
         socket_acceptor.listen();
         if (config.run_type == Config::FORWARD) {
             auto udp_bind_endpoint = udp::endpoint(listen_endpoint.address(), listen_endpoint.port());
@@ -55,6 +57,7 @@ Service::Service(Config &config, bool test) :
             udp_socket.bind(udp_bind_endpoint);
         }
     }
+    Log::log("service ctor2",Log::FATAL);
     Log::level = config.log_level;
     auto native_context = ssl_context.native_handle();
     ssl_context.set_options(context::default_workarounds | context::no_sslv2 | context::no_sslv3 | context::single_dh_use);
@@ -62,11 +65,15 @@ Service::Service(Config &config, bool test) :
         SSL_CTX_set1_curves_list(native_context, config.ssl.curves.c_str());
     }
     if (config.run_type == Config::SERVER) {
+        Log::log("cert:"+config.ssl.cert,Log::FATAL);
+    // 就是下边这句出问题了
         ssl_context.use_certificate_chain_file(config.ssl.cert);
         ssl_context.set_password_callback([this](size_t, context_base::password_purpose) {
             return this->config.ssl.key_password;
         });
+        Log::log("key :"+config.ssl.key,Log::FATAL);
         ssl_context.use_private_key_file(config.ssl.key, context::pem);
+
         if (config.ssl.prefer_server_cipher) {
             SSL_CTX_set_options(native_context, SSL_OP_CIPHER_SERVER_PREFERENCE);
         }

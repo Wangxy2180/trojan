@@ -2,6 +2,23 @@
 
 这里是v1.12.0版本，是我用来阅读代码写笔记使用的
 
+拿到手记得先修改配置文件里的东西，
+
+运行方式：先配置文件检测。
+```
+./trojan --test
+```
+如果没问题会报
+```
+The config file looks good.
+```
+
+尚未填的坑
+- [ ] po::command_line_parser(argc, argv).options(desc).positional(pd).run()
+- []
+- []
+- []
+
 
 
 # trojan

@@ -74,15 +74,18 @@ int main(int argc, const char *argv[]) {
             ("help,h", "print help message")
             ("keylog,k", po::value<string>(&keylog_file)->value_name("KEYLOG"), "specify keylog file location (OpenSSL >= 1.1.1)")
             ("log,l", po::value<string>(&log_file)->value_name("LOG"), "specify log file location")
+            // 这个bool_switch，只要在你的命令行中出现了--test，他就会变为true，否则就是false.--test不接受任何显式的值
             ("test,t", po::bool_switch(&test), "test config file")
             ("version,v", "print version and build info")
         ;
         po::positional_options_description pd;
         pd.add("config", 1);
         po::variables_map vm;
+        // 这里的还没学完
         po::store(po::command_line_parser(argc, argv).options(desc).positional(pd).run(), vm);
         po::notify(vm);
         if (vm.count("help")) {
+            // log的输入是一个string和level
             Log::log(string("usage: ") + argv[0] + " [-htv] [-l LOG] [-k KEYLOG] [[-c] CONFIG]", Log::FATAL);
             cerr << desc;
             exit(EXIT_SUCCESS);
@@ -118,26 +121,40 @@ int main(int argc, const char *argv[]) {
             Log::redirect_keylog(keylog_file);
         }
         bool restart;
+        // 一些网络相关的配置文件,和/usr/loacl/etc/trojan/config.json一样
         Config config;
         do {
+            cout<<1111111<<endl;
             restart = false;
             if (config.sip003()) {
                 Log::log_with_date_time("SIP003 is loaded", Log::WARN);
             } else {
                 config.load(config_file);
+                Log::log("config.load",Log::FATAL);
             }
+
+            // test is false
+            std::cout<<"test: "<<test<<std::endl;
+            // 就是下边这条语句出问题了，测试通过后还是有问题，需要sudo权限
             Service service(config, test);
+            // std::cout<<"test: "<<test<<std::endl;
+            std::cout<<"main before test"<<std::endl;
+
             if (test) {
                 Log::log("The config file looks good.", Log::OFF);
                 exit(EXIT_SUCCESS);
             }
+            std::cout<<"main..after test"<<std::endl;
             signal_set sig(service.service());
+            // std::cout<<123<<std::endl;
             sig.add(SIGINT);
             sig.add(SIGTERM);
 #ifndef _WIN32
             sig.add(SIGHUP);
             sig.add(SIGUSR1);
 #endif // _WIN32
+            // std::cout<<123<<std::endl;
+
             signal_async_wait(sig, service, restart);
             service.run();
             if (restart) {

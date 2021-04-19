@@ -36,6 +36,7 @@ FILE *Log::keylog(NULL);
 FILE *Log::output_stream(stderr);
 
 void Log::log(const string &message, Level level) {
+    // 这总写法很棒啊，学习一下
     if (level >= Log::level) {
 #ifdef ENABLE_ANDROID_LOG
         __android_log_print(ANDROID_LOG_ERROR, "trojan", "%s\n",

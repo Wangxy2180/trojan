@@ -20,6 +20,7 @@
 #include "version.h"
 using namespace std;
 
+// 好硬核的版本获取方法
 const string Version::version("1.12.0");
 
 string Version::get_version() {
